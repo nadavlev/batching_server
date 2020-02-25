@@ -10,6 +10,7 @@ import mongoose from "mongoose";
 import passport from "passport";
 import bluebird from "bluebird";
 import { MONGODB_URI, SESSION_SECRET } from "./util/secrets";
+import cors from "cors";
 
 const MongoStore = mongo(session);
 
@@ -38,6 +39,17 @@ mongoose.connect(mongoUrl, { useNewUrlParser: true, useCreateIndex: true, useUni
 });
 
 // Express configuration
+//options for cors midddleware
+app.options("*", cors());
+const options: cors.CorsOptions = {
+    allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "X-Access-Token"],
+    credentials: true,
+    methods: "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE",
+    origin: "*",
+    preflightContinue: false
+  };
+  //use cors middleware
+app.use(cors(options));
 app.set("port", process.env.PORT || 3000);
 app.set("views", path.join(__dirname, "../views"));
 app.set("view engine", "pug");
@@ -65,21 +77,22 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
     // After successful login, redirect back to the intended page
     if (!req.user &&
-    req.path !== "/login" &&
-    req.path !== "/signup" &&
-    !req.path.match(/^\/auth/) &&
-    !req.path.match(/\./)) {
-        req.session.returnTo = req.path;
-    } else if (req.user &&
-    req.path == "/account") {
-        req.session.returnTo = req.path;
-    }
-    next();
-});
-
-app.use(
-    express.static(path.join(__dirname, "public"), { maxAge: 31557600000 })
-);
+        req.path !== "/login" &&
+        req.path !== "/signup" &&
+        !req.path.match(/^\/auth/) &&
+        !req.path.match(/\./)) {
+            req.session.returnTo = req.path;
+        } else if (req.user &&
+            req.path == "/account") {
+                req.session.returnTo = req.path;
+            }
+            next();
+        });
+        
+        app.use(
+            express.static(path.join(__dirname, "public"), { maxAge: 31557600000 })
+            );
+            
 
 /**
  * Primary app routes.
@@ -106,6 +119,8 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
  * API examples routes.
  */
 app.get("/api", apiController.getApi);
+app.get("/api/initial", apiController.getIniitialTest);
+app.get("/api/generate/:quantity", apiController.generateData);
 app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, apiController.getFacebook);
 
 /**
