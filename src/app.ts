@@ -120,7 +120,7 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
  */
 app.get("/api", apiController.getApi);
 app.get("/api/initial", apiController.getIniitialTest);
-app.get("/api/generate/:quantity", apiController.generateData);
+app.get("/api/generate/:quantity/:save", apiController.generateData);
 app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, apiController.getFacebook);
 
 /**

@@ -2,10 +2,11 @@
 
 import graph from "fbgraph";
 import { Response, Request, NextFunction } from "express";
-import { UserDocument, MyUser } from "src/models/User";
 import { LoremIpsum } from "lorem-ipsum";
 import generatePassword from "password-generator";
 import moment from "moment";
+import { UserDocument } from "../models/User";
+import { MyUser } from "../models/MyUser";
 
 
 /**
@@ -40,6 +41,16 @@ export const getIniitialTest = (req: Request, res: Response) => {
     res.send(data);
 };
 
+function saveUser( user: MyUser) {
+    console.log(user);
+}
+
+function saveUsers(users: MyUser[]) {
+    for (const user in users) {
+        saveUser(users[user]);
+    }
+}
+
 export const generateData = (req: Request, res: Response) => {
     const lorem = new LoremIpsum({
         sentencesPerParagraph: {
@@ -53,6 +64,7 @@ export const generateData = (req: Request, res: Response) => {
       });
       
     const recordsToCreate: number = parseInt(req.params.quantity);
+    const isSave: boolean = req.params.save === "true";
     const timeObj = moment();
     const currentMilis = timeObj.add(1, "months");
     console.log(currentMilis);
@@ -79,11 +91,15 @@ export const generateData = (req: Request, res: Response) => {
                 website: "www."+domain+".com",
                 picture: "string"
             },
-            comparePassword: () => {},
             gravatar: (num: number) => { return "1".repeat(num); }
         };
         generatedUsers.push(generatedUser);
     }
-    res.send({data: generatedUsers});
+    if (isSave) {
+        saveUsers(generatedUsers);
+    }
+    else {
+        res.send({data: generatedUsers});
+    }
 };
 
