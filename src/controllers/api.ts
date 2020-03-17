@@ -6,7 +6,8 @@ import { LoremIpsum } from "lorem-ipsum";
 import generatePassword from "password-generator";
 import moment from "moment";
 import { UserDocument } from "../models/User";
-import { MyUser } from "../models/MyUser";
+import { MyUserDocument, MyUesr } from "../models/MyUser";
+import casual from "casual";
 
 
 /**
@@ -41,11 +42,14 @@ export const getIniitialTest = (req: Request, res: Response) => {
     res.send(data);
 };
 
-function saveUser( user: MyUser) {
+
+
+function saveUser( user: MyUserDocument) {
     console.log(user);
+    user.save();
 }
 
-function saveUsers(users: MyUser[]) {
+function saveUsers(users: MyUserDocument[]) {
     for (const user in users) {
         saveUser(users[user]);
     }
@@ -67,16 +71,17 @@ export const generateData = (req: Request, res: Response) => {
     const isSave: boolean = req.params.save === "true";
     const timeObj = moment();
     const currentMilis = timeObj.add(1, "months");
-    console.log(currentMilis);
-    const generatedUsers: MyUser[] = [];
+    const generatedUsers: MyUserDocument[] = [];
     for (let i = 0; i <= recordsToCreate; i++) {
-        const name: string = lorem.generateWords(1);
+        const firstName: string = casual.first_name;
+        const lastName: string = casual.last_name;
+        const name = firstName + "_"+ lastName;
         const domain: string = lorem.generateWords(1);
-        const generatedUser: MyUser = {
-            email: name+"@"+ domain +".com",
+        const generatedUser: MyUserDocument = new MyUesr({
+            email: name+i+"@"+ domain +".com",
             password: generatePassword(),
             passwordResetToken: generatePassword(),
-            passwordResetExpires: currentMilis.add(Math.random() * 3600000000, "d").toDate(),
+            passwordResetExpires: currentMilis.add(Math.random() * 3, "d").toDate(),
             facebook: "https://www.facebook.com/" + name + i,
             tokens: [
                 {
@@ -92,7 +97,7 @@ export const generateData = (req: Request, res: Response) => {
                 picture: "string"
             },
             gravatar: (num: number) => { return "1".repeat(num); }
-        };
+        });
         generatedUsers.push(generatedUser);
     }
     if (isSave) {
