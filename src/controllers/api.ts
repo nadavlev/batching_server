@@ -42,6 +42,11 @@ export const getIniitialTest = (req: Request, res: Response) => {
     res.send(data);
 };
 
+export const getTotalNumberOfRecords = async (req: Request, res: Response) => {
+    const num = await MyUesr.count({});
+    console.log(num);
+    res.send({num});
+};
 
 
 function saveUser( user: MyUserDocument) {
