@@ -1,12 +1,12 @@
 "use strict";
 
+import { MyUesr, MyUserDocument } from "./../models/MyUser";
 import graph from "fbgraph";
 import { Response, Request, NextFunction } from "express";
 import { LoremIpsum } from "lorem-ipsum";
 import generatePassword from "password-generator";
 import moment from "moment";
 import { UserDocument } from "../models/User";
-import { MyUserDocument, MyUesr } from "../models/MyUser";
 import casual from "casual";
 
 
@@ -38,12 +38,16 @@ export const getFacebook = (req: Request, res: Response, next: NextFunction) => 
 };
 
 export const getIniitialTest = (req: Request, res: Response) => {
-    const data = {body: "Initial test" + (new Date).getTime()};
-    res.send(data);
+    
+    MyUesr.find({}, (err, users) => {
+        if (err) console.error(err);
+        const resObject = {startTime: (new Date).getTime(), data: users };
+        res.send(resObject);
+    });
 };
 
 export const getTotalNumberOfRecords = async (req: Request, res: Response) => {
-    const num = await MyUesr.count({});
+    const num = await MyUesr .count({});
     console.log(num);
     res.send({num});
 };
