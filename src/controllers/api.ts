@@ -8,6 +8,8 @@ import generatePassword from "password-generator";
 import moment from "moment";
 import { UserDocument } from "../models/User";
 import casual from "casual";
+import * as _ from "lodash";
+import {TimingObjectDocument, TimingObject} from "../models/TimingObject";
 
 
 /**
@@ -37,18 +39,21 @@ export const getFacebook = (req: Request, res: Response, next: NextFunction) => 
     });
 };
 
-export const getIniitialTest = (req: Request, res: Response) => {
-    
+export const getInitialTest = (req: Request, res: Response) => {
+
+    const fetchQuantity = _.parseInt(req.query.fetchQuantity) || 1000;
     MyUesr.find({}, (err, users) => {
         if (err) console.error(err);
-        const resObject = {startTime: (new Date).getTime(), data: users };
+        const resObject = {startTime: (new Date).getTime(), actualFetchQuantity: fetchQuantity, data: users };
+        res.status(200);
         res.send(resObject);
-    });
+    }).sort({_id:1}).limit(fetchQuantity);
 };
 
 export const getTotalNumberOfRecords = async (req: Request, res: Response) => {
-    const num = await MyUesr .count({});
+    const num = await MyUesr.count({});
     console.log(num);
+    res.status(200);
     res.send({num});
 };
 
@@ -63,6 +68,21 @@ function saveUsers(users: MyUserDocument[]) {
         saveUser(users[user]);
     }
 }
+
+export const saveTimingObject = (req: Request, res: Response) => {
+    const timingObj = req.body;
+    console.log(timingObj);
+    const timingObject: TimingObjectDocument = new TimingObject({
+        ...timingObj
+    });
+    timingObject.save().then(() => {
+        res.status(200);
+        res.send({status: 'saved'});
+    }, () => {
+        res.status(500);
+        res.send({status: 'Not Saved'});
+    });
+};
 
 export const generateData = (req: Request, res: Response) => {
     const lorem = new LoremIpsum({
@@ -81,7 +101,7 @@ export const generateData = (req: Request, res: Response) => {
     const timeObj = moment();
     const currentMilis = timeObj.add(1, "months");
     const generatedUsers: MyUserDocument[] = [];
-    for (let i = 0; i <= recordsToCreate; i++) {
+    for (let i = 1; i <= recordsToCreate; i++) {
         const firstName: string = casual.first_name;
         const lastName: string = casual.last_name;
         const name = firstName + "_"+ lastName;
@@ -113,6 +133,7 @@ export const generateData = (req: Request, res: Response) => {
         saveUsers(generatedUsers);
     }
     else {
+        res.writeHead(200, {'Content-Type': 'text/html'});
         res.send({data: generatedUsers});
     }
 };
