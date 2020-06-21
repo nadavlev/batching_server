@@ -1,5 +1,5 @@
 import { AuthToken } from "./User";
-import mongoose from "mongoose";
+import * as mongoose from "mongoose";
 
 export type MyUserDocument = mongoose.Document & {
     email: string;
@@ -39,4 +39,4 @@ const myUserSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-export const MyUesr = mongoose.model<MyUserDocument>("myUser", myUserSchema);
+export const MyUser = mongoose.model<MyUserDocument>("myUser", myUserSchema);

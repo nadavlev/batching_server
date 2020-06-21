@@ -121,6 +121,7 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
 app.get("/api", apiController.getApi);
 app.get("/api/initial", apiController.getInitialTest);
 app.get("/api/getTotalNumberOfRecords", apiController.getTotalNumberOfRecords);
+app.get("/api/constantBatchSize", apiController.constantBatchSize);
 app.post("/api/timingObject", apiController.saveTimingObject);
 app.get("/api/generate/:quantity/:save", apiController.generateData);
 app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, apiController.getFacebook);

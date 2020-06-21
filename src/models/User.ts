@@ -1,6 +1,6 @@
-import bcrypt from "bcrypt-nodejs";
-import crypto from "crypto";
-import mongoose from "mongoose";
+import * as bcrypt from "bcrypt-nodejs";
+import * as crypto from "crypto";
+import * as mongoose from "mongoose";
 
 export type UserDocument = mongoose.Document & {
     email: string;

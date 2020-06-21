@@ -1,7 +1,7 @@
 "use strict";
 
-import { MyUesr, MyUserDocument } from "./../models/MyUser";
-import graph from "fbgraph";
+import { MyUser, MyUserDocument } from "./../models/MyUser";
+import graph, {batch} from "fbgraph";
 import { Response, Request, NextFunction } from "express";
 import { LoremIpsum } from "lorem-ipsum";
 import generatePassword from "password-generator";
@@ -42,7 +42,7 @@ export const getFacebook = (req: Request, res: Response, next: NextFunction) => 
 export const getInitialTest = (req: Request, res: Response) => {
 
     const fetchQuantity = _.parseInt(req.query.fetchQuantity) || 1000;
-    MyUesr.find({}, (err, users) => {
+    MyUser.find({}, (err, users) => {
         if (err) console.error(err);
         const resObject = {startTime: (new Date).getTime(), actualFetchQuantity: fetchQuantity, data: users };
         res.status(200);
@@ -51,8 +51,7 @@ export const getInitialTest = (req: Request, res: Response) => {
 };
 
 export const getTotalNumberOfRecords = async (req: Request, res: Response) => {
-    const num = await MyUesr.count({});
-    console.log(num);
+    const num = await MyUser.count({});
     res.status(200);
     res.send({num});
 };
@@ -69,6 +68,18 @@ function saveUsers(users: MyUserDocument[]) {
     }
 }
 
+export const constantBatchSize = (req: Request, res: Response) => {
+    const batchSize: number = +req.query.batchSize;
+    const currentId: string = req.query.currentId || "5e83494d880c17b508395401";
+    const queryObject: any = req.query.currentId ? {_id: {$gt: currentId}} : {};
+    MyUser.find(queryObject).limit(batchSize || 1000).sort("_id").exec((err, users: MyUserDocument[]) => {
+        if (err) console.error(err);
+        res.status(200);
+        res.send({"data": users});
+    });
+
+};
+
 export const saveTimingObject = (req: Request, res: Response) => {
     const timingObj = req.body;
     console.log(timingObj);
@@ -77,10 +88,10 @@ export const saveTimingObject = (req: Request, res: Response) => {
     });
     timingObject.save().then(() => {
         res.status(200);
-        res.send({status: 'saved'});
+        res.send({status: "saved"});
     }, () => {
         res.status(500);
-        res.send({status: 'Not Saved'});
+        res.send({status: "Not Saved"});
     });
 };
 
@@ -106,7 +117,7 @@ export const generateData = (req: Request, res: Response) => {
         const lastName: string = casual.last_name;
         const name = firstName + "_"+ lastName;
         const domain: string = lorem.generateWords(1);
-        const generatedUser: MyUserDocument = new MyUesr({
+        const generatedUser: MyUserDocument = new MyUser({
             email: name+i+"@"+ domain +".com",
             password: generatePassword(),
             passwordResetToken: generatePassword(),
@@ -133,7 +144,7 @@ export const generateData = (req: Request, res: Response) => {
         saveUsers(generatedUsers);
     }
     else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.writeHead(200, {"Content-Type": "text/html"});
         res.send({data: generatedUsers});
     }
 };
