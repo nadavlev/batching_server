@@ -6,37 +6,47 @@ export type MyUserDocument = mongoose.Document & {
     password: string;
     passwordResetToken: string;
     passwordResetExpires: Date;
-
     facebook: string;
-    tokens: AuthToken[];
-
-    profile: {
-        name: string;
-        gender: string;
-        location: string;
-        website: string;
-        picture: string;
-    };
-
-    gravatar: (size: number) => string;
+    name: string;
+    firstName: string;
+    lastName: string;
+    gender: string;
+    country: string;
+    city: string;
+    zip: string;
+    address: string;
+    lat: string;
+    long: string;
+    website: string;
+    ip: string;
+    company: string;
+    cardType: string;
+    cardNumber: number;
+    cardExp: string;
 }
 
 const myUserSchema = new mongoose.Schema({
-    email: { type: String, unique: true },
+    email: String,
     password: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
-
     facebook: String,
-    tokens: Array,
-
-    profile: {
-        name: String,
-        gender: String,
-        location: String,
-        website: String,
-        picture: String
-    }
-}, { timestamps: true });
+    name: String,
+    firstName: String,
+    lastName: String,
+    gender: String,
+    country: String,
+    city: String,
+    zip: String,
+    address: String,
+    lat: String,
+    long: String,
+    website: String,
+    ip: String,
+    company: String,
+    cardType: String,
+    cardNumber: Number,
+    cardExp: String
+    }, { timestamps: true });
 
 export const MyUser = mongoose.model<MyUserDocument>("myUser", myUserSchema);

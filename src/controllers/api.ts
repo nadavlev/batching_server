@@ -3,13 +3,13 @@
 import { MyUser, MyUserDocument } from "./../models/MyUser";
 import graph, {batch} from "fbgraph";
 import { Response, Request, NextFunction } from "express";
-import { LoremIpsum } from "lorem-ipsum";
 import generatePassword from "password-generator";
 import moment from "moment";
 import { UserDocument } from "../models/User";
 import casual from "casual";
 import * as _ from "lodash";
 import {TimingObjectDocument, TimingObject} from "../models/TimingObject";
+import {stringify} from 'jsonstream';
 
 
 /**
@@ -42,23 +42,22 @@ export const getFacebook = (req: Request, res: Response, next: NextFunction) => 
 export const getInitialTest = (req: Request, res: Response) => {
 
     const fetchQuantity = _.parseInt(req.query.fetchQuantity) || 1000;
-    MyUser.find({}, (err, users) => {
-        if (err) console.error(err);
-        const resObject = {startTime: (new Date).getTime(), actualFetchQuantity: fetchQuantity, data: users };
-        res.status(200);
-        res.send(resObject);
-    }).sort({_id:1}).limit(fetchQuantity);
+    console.log(`Fetch quantity is: ${fetchQuantity}`);
+    MyUser.find({}).sort({_id:1}).limit(fetchQuantity).cursor()
+        .pipe( stringify())
+        .pipe(res.type('json'));
+    //TODO: send status
+    //TODO: does this end?
 };
 
 export const getTotalNumberOfRecords = async (req: Request, res: Response) => {
-    const num = await MyUser.count({});
+    const num = await MyUser.countDocuments({});
     res.status(200);
     res.send({num});
 };
 
 
 function saveUser( user: MyUserDocument) {
-    console.log(user);
     user.save();
 }
 
@@ -72,17 +71,14 @@ export const constantBatchSize = (req: Request, res: Response) => {
     const batchSize: number = +req.query.batchSize;
     const currentId: string = req.query.currentId || "5e83494d880c17b508395401";
     const queryObject: any = req.query.currentId ? {_id: {$gt: currentId}} : {};
-    MyUser.find(queryObject).limit(batchSize || 1000).sort("_id").exec((err, users: MyUserDocument[]) => {
-        if (err) console.error(err);
-        res.status(200);
-        res.send({"data": users});
-    });
-
-};
+    MyUser.find(queryObject).limit(batchSize || 1000).sort("_id")
+        .cursor()
+        .pipe(stringify())
+        .pipe(res.type('json'));
+}
 
 export const saveTimingObject = (req: Request, res: Response) => {
     const timingObj = req.body;
-    console.log(timingObj);
     const timingObject: TimingObjectDocument = new TimingObject({
         ...timingObj
     });
@@ -96,56 +92,48 @@ export const saveTimingObject = (req: Request, res: Response) => {
 };
 
 export const generateData = (req: Request, res: Response) => {
-    const lorem = new LoremIpsum({
-        sentencesPerParagraph: {
-          max: 8,
-          min: 4
-        },
-        wordsPerSentence: {
-          max: 16,
-          min: 4
-        }
-      });
-      
+    const genders = ['Male', 'Female', 'Gay', 'Lesbian', 'Transgender', 'Undefined'];
     const recordsToCreate: number = parseInt(req.params.quantity);
     const isSave: boolean = req.params.save === "true";
     const timeObj = moment();
     const currentMilis = timeObj.add(1, "months");
     const generatedUsers: MyUserDocument[] = [];
     for (let i = 1; i <= recordsToCreate; i++) {
-        const firstName: string = casual.first_name;
-        const lastName: string = casual.last_name;
-        const name = firstName + "_"+ lastName;
-        const domain: string = lorem.generateWords(1);
+        const name = casual.username;
+        const cardType = casual.card_type;
         const generatedUser: MyUserDocument = new MyUser({
-            email: name+i+"@"+ domain +".com",
+            email: casual.email,
             password: generatePassword(),
-            passwordResetToken: generatePassword(),
+            passwordResetToken: casual.password,
             passwordResetExpires: currentMilis.add(Math.random() * 3, "d").toDate(),
-            facebook: "https://www.facebook.com/" + name + i,
-            tokens: [
-                {
-                    accessToken: lorem.generateWords(3),
-                    kind: "123"
-                }
-            ],
-            profile: {
-                name: name,
-                gender: "string",
-                location: "string",
-                website: "www."+domain+".com",
-                picture: "string"
-            },
-            gravatar: (num: number) => { return "1".repeat(num); }
+            facebook: "https://www.facebook.com/" + name,
+            name: name,
+            firstName: casual.first_name,
+            lastName: casual.last_name,
+            gender: genders[_.random(genders.length-1)],
+            country: casual.country,
+            city: casual.city,
+            zip: casual.zip( 9),
+            address: casual.address,
+            lat: casual.latitude,
+            long: casual.longitude,
+            website: casual.url,
+            ip: casual.ip,
+            company: casual.company_name,
+            cardType,
+            cardNumber: casual.card_number(cardType),
+            cardExp: casual.card_exp
         });
+        if (isSave) {
+            saveUser(generatedUser);
+
+        }
+
         generatedUsers.push(generatedUser);
+
     }
-    if (isSave) {
-        saveUsers(generatedUsers);
-    }
-    else {
-        res.writeHead(200, {"Content-Type": "text/html"});
-        res.send({data: generatedUsers});
-    }
+
+    res.status(200);
+    res.send({data: generatedUsers});
 };
 
